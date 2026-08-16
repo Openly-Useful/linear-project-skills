@@ -1,0 +1,56 @@
+name: Bug report
+description: Report incorrect or unsafe skill behavior
+title: "[Bug] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve the skills. Use synthetic or sanitized examples only.
+  - type: dropdown
+    id: skill
+    attributes:
+      label: Affected skill
+      options:
+        - linear-bootstrap-scoped-project
+        - linear-sync-project-work
+        - linear-reconcile-project-history
+        - Collection or validator
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: Describe the scope, invariant, or workflow result you expected.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Describe what happened without including credentials or private source content.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Synthetic reproduction
+      description: Provide a minimal prompt or dry-run scenario using synthetic names and identifiers.
+    validations:
+      required: true
+  - type: input
+    id: revision
+    attributes:
+      label: Revision
+      description: Commit SHA, release, or download date.
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Public-data check
+      options:
+        - label: I removed secrets, personal information, private repository content, customer data, and local absolute paths.
+          required: true

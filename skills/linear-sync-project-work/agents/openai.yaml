@@ -1,0 +1,4 @@
+interface:
+  display_name: "Linear Project Work Sync"
+  short_description: "Keep project work and evidence synchronized"
+  default_prompt: "Use $linear-sync-project-work to keep the linked Linear project accurate as implementation progresses."

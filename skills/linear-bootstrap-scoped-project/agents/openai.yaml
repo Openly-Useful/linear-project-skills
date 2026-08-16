@@ -1,0 +1,4 @@
+interface:
+  display_name: "Linear Scoped Project Bootstrap"
+  short_description: "Create a scoped Linear project and legacy ledger"
+  default_prompt: "Use $linear-bootstrap-scoped-project to create a scoped Linear project, dedicated team key, and verified legacy capture."

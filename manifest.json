@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "name": "linear-project-skills",
+  "version": "0.1.0",
+  "publisher": "Openly Useful",
+  "license": "MIT",
+  "repository": "https://github.com/Openly-Useful/linear-project-skills",
+  "skills": [
+    {
+      "name": "linear-bootstrap-scoped-project",
+      "path": "skills/linear-bootstrap-scoped-project",
+      "handoffTo": [
+        "linear-sync-project-work",
+        "linear-reconcile-project-history"
+      ]
+    },
+    {
+      "name": "linear-sync-project-work",
+      "path": "skills/linear-sync-project-work",
+      "handoffTo": [
+        "linear-bootstrap-scoped-project",
+        "linear-reconcile-project-history"
+      ]
+    },
+    {
+      "name": "linear-reconcile-project-history",
+      "path": "skills/linear-reconcile-project-history",
+      "handoffTo": [
+        "linear-bootstrap-scoped-project",
+        "linear-sync-project-work"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Linear Project History Reconciler"
+  short_description: "Find, move, and classify related Linear work"
+  default_prompt: "Use $linear-reconcile-project-history to find an existing Linear project, move related tasks, and capture legacy work as historical."
