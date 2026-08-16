@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<evaluation suite="linear-project-mcp-read-only" version="1">
+  <qa_pair>
+    <question>How many tools does the server expose in the synthetic protocol fixture?</question>
+    <answer>13</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Which scope code is allowlisted in the synthetic workflow fixture?</question>
+    <answer>ACQI</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>What team key does the synthetic parent team retain?</question>
+    <answer>OPEN</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>What key is assigned to the synthetic dedicated subteam?</question>
+    <answer>ACQI</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>What is the verified first issue identifier on the empty synthetic ACQI subteam?</question>
+    <answer>ACQI-1</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>What exact title prefix distinguishes captured legacy work?</question>
+    <answer>[HISTORICAL]</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>What actionability value is stored on a historical capture?</question>
+    <answer>none</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Which synthetic GitHub repository is allowlisted by the adapter fixture?</question>
+    <answer>Openly-Useful/example</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Which vault-relative directory is allowlisted by the Obsidian fixture?</question>
+    <answer>Projects/ACQI</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Does the reconciliation candidate tool move issues?</question>
+    <answer>No</answer>
+  </qa_pair>
+</evaluation>

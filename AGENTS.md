@@ -6,6 +6,9 @@ Before claiming completion, run:
 
 ```sh
 python3 scripts/validate.py
+cd mcp/linear-project-mcp-server
+pnpm check
+pnpm pack --dry-run
 ```
 
 Preserve these boundaries:

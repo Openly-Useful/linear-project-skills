@@ -1,0 +1,69 @@
+{
+  "name": "@openly-useful/linear-project-mcp-server",
+  "version": "0.1.0",
+  "description": "Scope-gated MCP server for Linear project administration with optional GitHub and Obsidian evidence adapters",
+  "type": "module",
+  "bin": {
+    "linear-project-mcp-server": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    ".env.example",
+    "evaluations"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.test.json --noEmit",
+    "check": "pnpm typecheck && pnpm test && pnpm build",
+    "prepack": "pnpm build",
+    "prepublishOnly": "pnpm check"
+  },
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "mcp",
+    "linear",
+    "github",
+    "obsidian",
+    "project-management"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Openly-Useful/linear-project-skills.git",
+    "directory": "mcp/linear-project-mcp-server"
+  },
+  "homepage": "https://github.com/Openly-Useful/linear-project-skills/tree/main/mcp/linear-project-mcp-server",
+  "bugs": "https://github.com/Openly-Useful/linear-project-skills/issues",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@linear/sdk": "90.0.0",
+    "@modelcontextprotocol/server": "2.0.0",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "2.0.0",
+    "@types/node": "26.2.0",
+    "tsx": "4.23.12",
+    "typescript": "7.0.2",
+    "vitest": "4.1.10"
+  }
+}

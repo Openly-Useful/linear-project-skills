@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import re
 import sys
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 
@@ -14,6 +15,22 @@ EXPECTED = {
     "linear-bootstrap-scoped-project": "references/legacy-capture-contract.md",
     "linear-sync-project-work": "references/evidence-update-contract.md",
     "linear-reconcile-project-history": "references/matching-and-history-contract.md",
+}
+MCP_DIR = ROOT / "mcp" / "linear-project-mcp-server"
+EXPECTED_MCP_TOOLS = {
+    "linear_project_capabilities",
+    "linear_project_resolve_scope",
+    "linear_project_create_team",
+    "linear_project_bootstrap",
+    "linear_project_list_scoped_issues",
+    "linear_project_upsert_scoped_issue",
+    "linear_project_find_candidates",
+    "linear_project_move_candidate",
+    "linear_project_link_evidence",
+    "github_get_project_evidence",
+    "obsidian_search_project_notes",
+    "obsidian_read_project_note",
+    "obsidian_upsert_project_note",
 }
 PRIVATE_PATTERNS = {
     "user absolute path": re.compile(r"/Users/", re.IGNORECASE),
@@ -114,15 +131,98 @@ def validate_manifest() -> None:
         require(isinstance(handoffs, list), f"manifest.json: handoffTo must be a list for {entry['name']}")
         require(set(handoffs) <= set(EXPECTED) - {entry["name"]}, f"manifest.json: invalid handoff for {entry['name']}")
 
+    mcp_servers = manifest.get("mcpServers")
+    require(isinstance(mcp_servers, list) and len(mcp_servers) == 1, "manifest.json: expected one MCP server")
+    server = mcp_servers[0]
+    require(server.get("name") == "linear-project-mcp-server", "manifest.json: incorrect MCP server name")
+    require(server.get("path") == "mcp/linear-project-mcp-server", "manifest.json: incorrect MCP server path")
+    require(server.get("package") == "@openly-useful/linear-project-mcp-server", "manifest.json: incorrect MCP package")
+    require(server.get("version") == "0.1.0", "manifest.json: incorrect MCP package version")
+    require(server.get("transports") == ["stdio"], "manifest.json: MCP transport must be stdio")
+    require(server.get("optionalAdapters") == ["github", "obsidian"], "manifest.json: incorrect optional adapters")
+
+
+def validate_mcp_server() -> None:
+    required_files = (
+        "package.json",
+        "pnpm-lock.yaml",
+        "pnpm-workspace.yaml",
+        "tsconfig.json",
+        "tsconfig.test.json",
+        "vitest.config.ts",
+        ".env.example",
+        "README.md",
+        "LICENSE",
+        "src/index.ts",
+        "src/server.ts",
+        "src/security.ts",
+        "tests/protocol.test.ts",
+        "tests/workflows.test.ts",
+        "tests/adapters.test.ts",
+        "evaluations/read-only.xml",
+        "evaluations/README.md",
+    )
+    for relative in required_files:
+        require((MCP_DIR / relative).is_file(), f"missing MCP file: {relative}")
+
+    package = json.loads((MCP_DIR / "package.json").read_text(encoding="utf-8"))
+    require(package.get("name") == "@openly-useful/linear-project-mcp-server", "MCP package: incorrect name")
+    require(package.get("version") == "0.1.0", "MCP package: incorrect version")
+    require(package.get("license") == "MIT", "MCP package: license must be MIT")
+    require(package.get("type") == "module", "MCP package: expected ESM")
+    require(package.get("engines", {}).get("node") == ">=20", "MCP package: expected Node.js >=20")
+    require(package.get("bin", {}).get("linear-project-mcp-server") == "dist/index.js", "MCP package: missing bin")
+    require("LICENSE" in package.get("files", []), "MCP package: LICENSE must be published")
+    require("evaluations" in package.get("files", []), "MCP package: evaluations must be published")
+    for section in ("dependencies", "devDependencies"):
+        dependencies = package.get(section)
+        require(isinstance(dependencies, dict) and dependencies, f"MCP package: missing {section}")
+        for name, version in dependencies.items():
+            require(
+                re.fullmatch(r"\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?", version or "") is not None,
+                f"MCP package: {name} must use an exact version",
+            )
+
+    server_source = (MCP_DIR / "src" / "server.ts").read_text(encoding="utf-8")
+    registered = set(re.findall(r'server\.registerTool\(\s*\n?\s*"([a-z0-9_]+)"', server_source))
+    require(registered == EXPECTED_MCP_TOOLS, "MCP server: registered tool set does not match the public contract")
+    require("const ConfirmWrite = z.literal(true)" in server_source, "MCP server: literal mutation confirmation is missing")
+
+    environment = (MCP_DIR / ".env.example").read_text(encoding="utf-8")
+    require("MCP_WRITES_ENABLED=false" in environment, "MCP example: writes must default to false")
+    for secret_name in ("LINEAR_API_KEY", "LINEAR_ACCESS_TOKEN", "GITHUB_TOKEN"):
+        match = re.search(rf"^#?\s*{secret_name}=(.*)$", environment, re.MULTILINE)
+        require(match is not None and not match.group(1).strip(), f"MCP example: {secret_name} must be empty")
+
+    evaluation_path = MCP_DIR / "evaluations" / "read-only.xml"
+    evaluation = ET.parse(evaluation_path).getroot()
+    pairs = evaluation.findall("qa_pair")
+    require(len(pairs) == 10, "MCP evaluations: expected exactly 10 read-only question/answer pairs")
+    questions: list[str] = []
+    for pair in pairs:
+        question = (pair.findtext("question") or "").strip()
+        answer = (pair.findtext("answer") or "").strip()
+        require(bool(question) and bool(answer), "MCP evaluations: every pair needs a question and answer")
+        questions.append(question)
+    require(len(set(questions)) == len(questions), "MCP evaluations: questions must be unique")
+
+    excluded_parts = {"node_modules", "dist", "coverage"}
+    for path in MCP_DIR.rglob("*"):
+        if not path.is_file() or excluded_parts.intersection(path.parts) or path.name == "pnpm-lock.yaml":
+            continue
+        validate_public_text(path)
+
 
 def validate_repository() -> None:
     validate_manifest()
+    validate_mcp_server()
     for name, required_reference in EXPECTED.items():
         validate_skill(name, required_reference)
 
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     for name in EXPECTED:
         require(f"skills/{name}/SKILL.md" in readme, f"README.md: missing link for {name}")
+    require("mcp/linear-project-mcp-server/README.md" in readme, "README.md: missing MCP server link")
 
     for path in (ROOT / "README.md", ROOT / "CONTRIBUTING.md", ROOT / "AGENTS.md", ROOT / "manifest.json"):
         validate_public_text(path)
@@ -135,7 +235,7 @@ def main() -> int:
         print(f"validation failed: {error}", file=sys.stderr)
         return 1
 
-    print(f"validated {len(EXPECTED)} skills; public distribution is consistent")
+    print(f"validated {len(EXPECTED)} skills and {len(EXPECTED_MCP_TOOLS)} MCP tools; public distribution is consistent")
     return 0
 
 

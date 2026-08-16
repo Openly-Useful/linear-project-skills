@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "name": "linear-project-skills",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "Openly Useful",
   "license": "MIT",
   "repository": "https://github.com/Openly-Useful/linear-project-skills",
@@ -28,6 +28,21 @@
       "handoffTo": [
         "linear-bootstrap-scoped-project",
         "linear-sync-project-work"
+      ]
+    }
+  ],
+  "mcpServers": [
+    {
+      "name": "linear-project-mcp-server",
+      "path": "mcp/linear-project-mcp-server",
+      "package": "@openly-useful/linear-project-mcp-server",
+      "version": "0.1.0",
+      "transports": [
+        "stdio"
+      ],
+      "optionalAdapters": [
+        "github",
+        "obsidian"
       ]
     }
   ]

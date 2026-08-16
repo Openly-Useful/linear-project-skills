@@ -19,5 +19,24 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Validate distributable skills
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: "11.19.0"
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+          cache-dependency-path: mcp/linear-project-mcp-server/pnpm-lock.yaml
+      - name: Validate public distribution
         run: python3 scripts/validate.py
+      - name: Install MCP dependencies
+        working-directory: mcp/linear-project-mcp-server
+        run: pnpm install --frozen-lockfile
+      - name: Test and build MCP server
+        working-directory: mcp/linear-project-mcp-server
+        run: pnpm check
+      - name: Inspect npm package contents
+        working-directory: mcp/linear-project-mcp-server
+        run: pnpm pack --dry-run

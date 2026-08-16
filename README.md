@@ -1,6 +1,6 @@
 # Linear Project Skills
 
-Three interoperable Agent Skills for creating, maintaining, and reconciling Linear projects without pulling unrelated work into scope.
+Three interoperable Agent Skills and an optional MCP server for creating, maintaining, and reconciling Linear projects without pulling unrelated work into scope.
 
 This collection is an [Openly Useful](https://openlyuseful.org) project: practical infrastructure people can inspect, adapt, and improve.
 
@@ -20,6 +20,14 @@ new project ──> bootstrap ──> sync
                     │ no canonical project
 existing work ─> reconcile ──> sync
 ```
+
+## Optional MCP server
+
+[`@openly-useful/linear-project-mcp-server`](mcp/linear-project-mcp-server/README.md) turns the workflows into 13 typed MCP tools. It can create a dedicated Linear team or subteam, bootstrap a scope-labeled project, capture active or `[HISTORICAL]` issues idempotently, find and explicitly move reviewed reconciliation candidates, and link verified evidence.
+
+The server calls Linear directly through its official TypeScript SDK. GitHub evidence is optional and read-only. Obsidian support is optional, local, restricted to allowlisted Markdown directories, and never copies note contents into Linear when adding a link.
+
+All mutations are disabled by default and require an exact organization allowlist, a scope-code allowlist, team/project gates, and a literal per-tool confirmation. See the [server setup and security guide](mcp/linear-project-mcp-server/README.md) for installation and client configuration.
 
 ## The key rule
 
@@ -46,6 +54,7 @@ Start a new task or restart the agent if its skill catalog does not refresh auto
 - A connected Linear integration with permission to read the target workspace and perform the requested writes.
 - Access to linked repositories or local project sources when those sources are part of the requested scope.
 - A workspace administrator when a new Linear team or team key must be provisioned and the integration cannot create one.
+- Node.js 20 or newer only when using the optional MCP server.
 
 The skills do not include credentials, a background daemon, or permission to monitor or mutate unrelated projects.
 
@@ -103,7 +112,16 @@ The repository validator uses only the Python standard library:
 python3 scripts/validate.py
 ```
 
-It checks skill structure, metadata, references, manifest entries, UI prompts, placeholder text, and common private-data leaks. Pull requests run the same command in GitHub Actions.
+To validate the MCP server too:
+
+```sh
+cd mcp/linear-project-mcp-server
+pnpm install --frozen-lockfile
+pnpm check
+pnpm pack --dry-run
+```
+
+The repository validator checks skill structure, metadata, references, manifest entries, MCP package metadata, evaluations, placeholder text, and common private-data leaks. Pull requests run both validation paths in GitHub Actions.
 
 ## Public-data boundary
 
