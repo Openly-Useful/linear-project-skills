@@ -1,10 +1,12 @@
 {
   "name": "@openly-useful/linear-project-mcp-server",
+  "mcpName": "org.openlyuseful/linear-project",
   "version": "0.1.0",
   "description": "Scope-gated MCP server for Linear project administration with optional GitHub and Obsidian evidence adapters",
   "type": "module",
   "bin": {
-    "linear-project-mcp-server": "dist/index.js"
+    "linear-project-mcp-server": "dist/index.js",
+    "linear-project-mcp-write-window": "dist/write-window.js"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -18,6 +20,7 @@
     "dist",
     "README.md",
     "LICENSE",
+    "server.json",
     ".env.example",
     "evaluations"
   ],
@@ -30,7 +33,7 @@
     "typecheck": "tsc -p tsconfig.test.json --noEmit",
     "check": "pnpm typecheck && pnpm test && pnpm build",
     "prepack": "pnpm build",
-    "prepublishOnly": "pnpm check"
+    "prepublishOnly": "python3 ../../scripts/validate.py --external-publication && pnpm check"
   },
   "packageManager": "pnpm@11.19.0",
   "engines": {

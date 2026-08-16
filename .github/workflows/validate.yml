@@ -1,4 +1,4 @@
-name: Validate skills
+name: Validate distribution
 
 on:
   pull_request:
@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  validate:
+  validate-distribution:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -19,6 +19,21 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Validate public distribution
+        run: |
+          python3 scripts/test_validate.py
+          python3 scripts/validate.py
+
+  validate-mcp:
+    name: Validate MCP on Node.js ${{ matrix.node-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ["20", "22", "24"]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
         with:
@@ -26,11 +41,9 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: ${{ matrix.node-version }}
           cache: pnpm
           cache-dependency-path: mcp/linear-project-mcp-server/pnpm-lock.yaml
-      - name: Validate public distribution
-        run: python3 scripts/validate.py
       - name: Install MCP dependencies
         working-directory: mcp/linear-project-mcp-server
         run: pnpm install --frozen-lockfile
@@ -38,5 +51,6 @@ jobs:
         working-directory: mcp/linear-project-mcp-server
         run: pnpm check
       - name: Inspect npm package contents
+        if: matrix.node-version == '24'
         working-directory: mcp/linear-project-mcp-server
         run: pnpm pack --dry-run

@@ -36,12 +36,25 @@ export function assertWriteAccess(config: ServerConfig, organizationId: string, 
   if (!config.writesEnabled) {
     throw new ScopeError("Mutations are disabled. Set MCP_WRITES_ENABLED=true only after configuring exact allowlists.");
   }
+  if (!config.writeWindowExpiresAt) {
+    throw new ScopeError("Mutations require a bounded MCP_WRITE_WINDOW_EXPIRES_AT timestamp");
+  }
+  if (!isWriteWindowActive(config)) {
+    throw new ScopeError("The MCP write window has expired; disable it and open a new bounded window before retrying");
+  }
   assertOrganizationAccess(config, organizationId);
   const scopeCode = normalizeScopeCode(scopeCodeInput);
   if (!config.linear.allowedScopeCodes.has(scopeCode)) {
     throw new ScopeError(`Scope code ${scopeCode} is not allowlisted`);
   }
   return scopeCode;
+}
+
+export function isWriteWindowActive(config: ServerConfig, now = Date.now()): boolean {
+  if (!config.writesEnabled || !config.writeWindowExpiresAt) return false;
+  const expiry = Date.parse(config.writeWindowExpiresAt);
+  const remaining = expiry - now;
+  return Number.isFinite(expiry) && remaining > 0 && remaining <= 60 * 60_000;
 }
 
 export function assertOrganizationAccess(config: ServerConfig, organizationId: string): void {

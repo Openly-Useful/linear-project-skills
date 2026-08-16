@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "description": "Three interoperable skills for bootstrapping, synchronizing, and reconciling tightly scoped Linear projects.",
+  "name": "linear-project-skills",
+  "owner": {
+    "email": "hello@openlyuseful.org",
+    "name": "Openly Useful",
+    "url": "https://openlyuseful.org"
+  },
+  "plugins": [
+    {
+      "author": {
+        "email": "hello@openlyuseful.org",
+        "name": "Openly Useful",
+        "url": "https://openlyuseful.org"
+      },
+      "category": "productivity",
+      "description": "Three interoperable skills for bootstrapping, synchronizing, and reconciling tightly scoped Linear projects.",
+      "name": "linear-project-skills",
+      "source": ".",
+      "strict": true,
+      "version": "0.2.0"
+    }
+  ],
+  "version": "0.2.0"
+}

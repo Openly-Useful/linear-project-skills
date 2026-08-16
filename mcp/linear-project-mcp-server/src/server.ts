@@ -1,5 +1,13 @@
 import { McpServer, type CallToolResult } from "@modelcontextprotocol/server";
 import { z } from "zod";
+import {
+  classifyAuditError,
+  classifyAuditOutcome,
+  createAuditLogger,
+  type AuditLogger,
+  type AuditMode,
+  type AuditOperation,
+} from "./audit.js";
 import type { WorkflowDependencies } from "./workflows.js";
 import { TrackerWorkflows } from "./workflows.js";
 
@@ -25,10 +33,17 @@ const ToolOutput = z.object({
   summary: z.string(),
   data: z.unknown().optional(),
   error: z.string().optional(),
+  audit: z
+    .object({
+      status: z.enum(["degraded", "unavailable"]),
+      errorClass: z.literal("audit_unavailable"),
+    })
+    .optional(),
 });
 
 export function createLinearProjectMcpServer(dependencies: WorkflowDependencies): McpServer {
   const workflows = new TrackerWorkflows(dependencies);
+  const audit = createAuditLogger(dependencies.config.auditLogPath);
   const server = new McpServer({ name: "linear-project-mcp-server", version: "0.1.0" });
 
   server.registerTool(
@@ -41,7 +56,10 @@ export function createLinearProjectMcpServer(dependencies: WorkflowDependencies)
       outputSchema: ToolOutput,
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     },
-    async (): Promise<CallToolResult> => toolResult("Capability inspection complete", () => workflows.capabilities()),
+    async (): Promise<CallToolResult> =>
+      toolResult(audit, "linear_project_capabilities", "read", "Capability inspection complete", () =>
+        workflows.capabilities(),
+      ),
   );
 
   server.registerTool(
@@ -65,7 +83,7 @@ export function createLinearProjectMcpServer(dependencies: WorkflowDependencies)
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     },
     async (input): Promise<CallToolResult> =>
-      toolResult("Exact scope resolved", () =>
+      toolResult(audit, "linear_project_resolve_scope", "read", "Exact scope resolved", () =>
         workflows.resolveScope({
           scopeCode: input.scope_code,
           ...(input.team_id ? { teamId: input.team_id } : {}),
@@ -96,7 +114,7 @@ export function createLinearProjectMcpServer(dependencies: WorkflowDependencies)
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     },
     async (input): Promise<CallToolResult> =>
-      toolResult("Dedicated team ensured and read back", () =>
+      toolResult(audit, "linear_project_create_team", "write", "Dedicated team ensured and read back", () =>
         workflows.ensureTeam({
           scopeCode: input.scope_code,
           name: input.name,
@@ -144,7 +162,7 @@ export function createLinearProjectMcpServer(dependencies: WorkflowDependencies)
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     },
     async (input): Promise<CallToolResult> =>
-      toolResult("Project bootstrap completed with readback", () =>
+      toolResult(audit, "linear_project_bootstrap", "write", "Project bootstrap completed with readback", () =>
         workflows.bootstrap({
           scopeCode: input.scope_code,
           projectName: input.project_name,
@@ -193,7 +211,7 @@ export function createLinearProjectMcpServer(dependencies: WorkflowDependencies)
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     },
     async (input): Promise<CallToolResult> =>
-      toolResult("Scoped issues listed", () =>
+      toolResult(audit, "linear_project_list_scoped_issues", "read", "Scoped issues listed", () =>
         workflows.listScopedIssues({
           scopeCode: input.scope_code,
           teamId: input.team_id,
@@ -227,7 +245,7 @@ export function createLinearProjectMcpServer(dependencies: WorkflowDependencies)
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     },
     async (input): Promise<CallToolResult> =>
-      toolResult("Scoped issue upsert completed with readback", () =>
+      toolResult(audit, "linear_project_upsert_scoped_issue", "write", "Scoped issue upsert completed with readback", () =>
         workflows.upsertScopedIssue({
           scopeCode: input.scope_code,
           teamId: input.team_id,
@@ -260,7 +278,7 @@ export function createLinearProjectMcpServer(dependencies: WorkflowDependencies)
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     },
     async (input): Promise<CallToolResult> =>
-      toolResult("Reconciliation candidates classified without mutation", () =>
+      toolResult(audit, "linear_project_find_candidates", "read", "Reconciliation candidates classified without mutation", () =>
         workflows.findCandidates({
           scopeCode: input.scope_code,
           destinationTeamId: input.destination_team_id,
@@ -304,7 +322,7 @@ export function createLinearProjectMcpServer(dependencies: WorkflowDependencies)
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: true },
     },
     async (input): Promise<CallToolResult> =>
-      toolResult("Reviewed issue move completed with readback", () =>
+      toolResult(audit, "linear_project_move_candidate", "write", "Reviewed issue move completed with readback", () =>
         workflows.moveCandidate({
           scopeCode: input.scope_code,
           issueId: input.issue_id,
@@ -345,7 +363,7 @@ export function createLinearProjectMcpServer(dependencies: WorkflowDependencies)
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     },
     async (input): Promise<CallToolResult> =>
-      toolResult("Verified evidence linked and destination read back", () =>
+      toolResult(audit, "linear_project_link_evidence", "write", "Verified evidence linked and destination read back", () =>
         workflows.linkEvidence({
           scopeCode: input.scope_code,
           teamId: input.team_id,
@@ -378,7 +396,7 @@ export function createLinearProjectMcpServer(dependencies: WorkflowDependencies)
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     },
     async (input): Promise<CallToolResult> =>
-      toolResult("GitHub evidence verified", () =>
+      toolResult(audit, "github_get_project_evidence", "read", "GitHub evidence verified", () =>
         workflows.githubReference({
           repository: input.repository,
           kind: input.kind,
@@ -400,7 +418,9 @@ export function createLinearProjectMcpServer(dependencies: WorkflowDependencies)
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     },
     async (input): Promise<CallToolResult> =>
-      toolResult("Obsidian note search complete", () => workflows.obsidianSearch(input.query, input.limit)),
+      toolResult(audit, "obsidian_search_project_notes", "read", "Obsidian note search complete", () =>
+        workflows.obsidianSearch(input.query, input.limit),
+      ),
   );
 
   server.registerTool(
@@ -414,7 +434,9 @@ export function createLinearProjectMcpServer(dependencies: WorkflowDependencies)
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     },
     async (input): Promise<CallToolResult> =>
-      toolResult("Obsidian note read", () => workflows.obsidianRead(input.relative_path)),
+      toolResult(audit, "obsidian_read_project_note", "read", "Obsidian note read", () =>
+        workflows.obsidianRead(input.relative_path),
+      ),
   );
 
   server.registerTool(
@@ -436,7 +458,7 @@ export function createLinearProjectMcpServer(dependencies: WorkflowDependencies)
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     },
     async (input): Promise<CallToolResult> =>
-      toolResult("Managed Obsidian project section upserted", () =>
+      toolResult(audit, "obsidian_upsert_project_note", "write", "Managed Obsidian project section upserted", () =>
         workflows.obsidianUpsert({
           relativePath: input.relative_path,
           scopeCode: input.scope_code,
@@ -449,21 +471,94 @@ export function createLinearProjectMcpServer(dependencies: WorkflowDependencies)
   return server;
 }
 
-async function toolResult(summary: string, operation: () => Promise<unknown>): Promise<CallToolResult> {
+async function toolResult(
+  audit: AuditLogger | undefined,
+  tool: string,
+  mode: AuditMode,
+  summary: string,
+  operation: () => Promise<unknown>,
+): Promise<CallToolResult> {
+  let auditOperation: AuditOperation | undefined;
+  let auditDegraded = false;
+  if (audit) {
+    try {
+      auditOperation = await audit.attempt(tool, mode);
+    } catch {
+      if (mode === "write") return auditUnavailableResult("write");
+      auditDegraded = true;
+    }
+  }
+
   try {
     const data = await operation();
-    const payload = { ok: true, summary, data };
+    if (auditOperation) {
+      try {
+        await audit?.complete(auditOperation, classifyAuditOutcome(mode, data));
+      } catch {
+        if (mode === "write") return auditUnavailableResult("write", true);
+        auditDegraded = true;
+      }
+    }
+    const payload = {
+      ok: true,
+      summary,
+      data,
+      ...(auditDegraded ? { audit: { status: "degraded" as const, errorClass: "audit_unavailable" as const } } : {}),
+    };
     return {
-      content: [{ type: "text", text: `${summary}\n\n${JSON.stringify(data, null, 2)}` }],
+      content: [
+        {
+          type: "text",
+          text: `${summary}${auditDegraded ? " (audit unavailable)" : ""}\n\n${JSON.stringify(data, null, 2)}`,
+        },
+      ],
       structuredContent: payload,
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    const payload = { ok: false, summary: "Operation failed", error: message };
+    if (auditOperation) {
+      const classification = classifyAuditError(error);
+      try {
+        await audit?.complete(auditOperation, classification.outcome, classification.errorClass);
+      } catch {
+        return auditUnavailableResult(mode, mode === "write");
+      }
+    }
+    const payload = {
+      ok: false,
+      summary: "Operation failed",
+      error: message,
+      ...(auditDegraded ? { audit: { status: "degraded" as const, errorClass: "audit_unavailable" as const } } : {}),
+    };
     return {
       isError: true,
-      content: [{ type: "text", text: `Operation failed: ${message}` }],
+      content: [
+        {
+          type: "text",
+          text: `Operation failed: ${message}${auditDegraded ? " (audit unavailable)" : ""}`,
+        },
+      ],
       structuredContent: payload,
     };
   }
+}
+
+function auditUnavailableResult(mode: AuditMode, operationMayHaveCompleted = false): CallToolResult {
+  const message =
+    mode === "read"
+      ? "Read operation failed and its terminal audit outcome could not be recorded; verify the audit sink before retrying"
+      : operationMayHaveCompleted
+        ? "Operation audit could not record the terminal outcome; verify external state before retrying"
+        : "Operation audit is configured but unavailable; write operation was not started";
+  const payload = {
+    ok: false,
+    summary: "Operation blocked",
+    error: message,
+    audit: { status: "unavailable" as const, errorClass: "audit_unavailable" as const },
+  };
+  return {
+    isError: true,
+    content: [{ type: "text", text: message }],
+    structuredContent: payload,
+  };
 }

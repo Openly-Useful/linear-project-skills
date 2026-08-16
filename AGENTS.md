@@ -5,6 +5,7 @@ This repository publishes portable Agent Skills for Linear project lifecycle wor
 Before claiming completion, run:
 
 ```sh
+python3 scripts/test_validate.py
 python3 scripts/validate.py
 cd mcp/linear-project-mcp-server
 pnpm check

@@ -5,6 +5,7 @@ import {
   assertProjectAllowed,
   assertTeamAllowed,
   assertWriteAccess,
+  isWriteWindowActive,
   normalizeScopeCode,
   scopeMarker,
   sourceMarker,
@@ -75,7 +76,12 @@ export class TrackerWorkflows {
     return {
       server: "linear-project-mcp-server",
       protocolSdk: "@modelcontextprotocol/server@2",
-      writesEnabled: this.#config.writesEnabled,
+      writesEnabled: isWriteWindowActive(this.#config),
+      writeWindow: {
+        configured: Boolean(this.#config.writeWindowExpiresAt),
+        active: isWriteWindowActive(this.#config),
+        ...(this.#config.writeWindowExpiresAt ? { expiresAt: this.#config.writeWindowExpiresAt } : {}),
+      },
       linear: {
         ...linearConnection,
         teamAdministration: true,

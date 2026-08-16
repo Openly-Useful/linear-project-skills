@@ -16,6 +16,7 @@ import type {
 export function testConfig(input: {
   organizationId?: string;
   writesEnabled?: boolean;
+  writeWindowExpiresAt?: string;
   teamIds?: readonly string[];
   projectIds?: readonly string[];
   scopeCodes?: readonly string[];
@@ -24,6 +25,7 @@ export function testConfig(input: {
   vaultName?: string;
   obsidianDirectories?: readonly string[];
 } = {}): ServerConfig {
+  const writesEnabled = input.writesEnabled ?? true;
   return {
     linear: {
       apiKey: "test-key",
@@ -42,7 +44,10 @@ export function testConfig(input: {
       vaultName: input.vaultName,
       allowedDirectories: input.obsidianDirectories ?? [],
     },
-    writesEnabled: input.writesEnabled ?? true,
+    writesEnabled,
+    writeWindowExpiresAt:
+      input.writeWindowExpiresAt ?? (writesEnabled ? new Date(Date.now() + 30 * 60_000).toISOString() : undefined),
+    auditLogPath: undefined,
   };
 }
 

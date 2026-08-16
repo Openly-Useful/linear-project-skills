@@ -11,6 +11,8 @@ import { createLinearProjectMcpServer } from "./server.js";
 export { createLinearProjectMcpServer } from "./server.js";
 export { TrackerWorkflows } from "./workflows.js";
 export { loadConfig } from "./config.js";
+export { AuditUnavailableError, FileAuditLogger, classifyAuditError, classifyAuditOutcome } from "./audit.js";
+export type { AuditErrorClass, AuditLogger, AuditMode, AuditOperation, AuditOutcome } from "./audit.js";
 export type * from "./types.js";
 
 export function createServerFromEnvironment(environment: NodeJS.ProcessEnv = process.env) {

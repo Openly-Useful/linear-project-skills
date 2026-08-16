@@ -4,6 +4,8 @@ Three interoperable Agent Skills and an optional MCP server for creating, mainta
 
 This collection is an [Openly Useful](https://openlyuseful.org) project: practical infrastructure people can inspect, adapt, and improve.
 
+Openly Useful LLC is the planned legal entity and remains `formation-pending`. The current publisher display name is Openly Useful; this repository does not claim that the LLC is formed, active, or the current operator. [`publisher.json`](publisher.json) is a repo-local projection of the [public publisher authority](https://openlyuseful.org/publisher/manifest.json), and external package, registry, and marketplace publication remains withheld until formation and publisher authorization are verified.
+
 ## Included skills
 
 | Skill | Use it to |
@@ -29,6 +31,29 @@ The server calls Linear directly through its official TypeScript SDK. GitHub evi
 
 All mutations are disabled by default and require an exact organization allowlist, a scope-code allowlist, team/project gates, and a literal per-tool confirmation. See the [server setup and security guide](mcp/linear-project-mcp-server/README.md) for installation and client configuration.
 
+The MCP integration has four intentionally distinct names:
+
+| Name | Meaning |
+| --- | --- |
+| `linear_project` | Canonical Codex MCP registration alias and the name used with `codex mcp` commands. |
+| `@openly-useful/linear-project-mcp-server` | npm package name. It becomes installable from npm after the first successful package release. |
+| `linear-project-mcp-server` | Package executable and MCP protocol server artifact name. |
+| `linear-project-mcp-write-window` | Package helper for explicitly opening, inspecting, and closing a bounded write window. |
+
+For a source checkout, build the package and register the local executable with Codex:
+
+```sh
+cd mcp/linear-project-mcp-server
+pnpm install --frozen-lockfile
+pnpm build
+MCP_ENTRYPOINT="$(pwd)/dist/index.js"
+codex mcp add linear_project -- node "$MCP_ENTRYPOINT"
+codex mcp get linear_project --json
+codex mcp list --json
+```
+
+These commands contain no credentials. Supply adapter credentials through a protected launcher or secret store rather than command arguments or committed client configuration. See the [MCP client guide](mcp/linear-project-mcp-server/README.md#connect-codex) for the npm command that applies after the first release and for the expected read-only acceptance checks.
+
 ## The key rule
 
 Linear issue identifiers inherit their prefix from a **team**, not a project or label. A workflow that must begin at `XY-1` therefore needs a new team with key `XY`, a verified empty issue history, and immediate readback of the first created issue. These skills stop instead of pretending that a project label can provide that guarantee.
@@ -47,6 +72,21 @@ cp -R linear-project-skills/skills/linear-reconcile-project-history ~/.codex/ski
 ```
 
 Start a new task or restart the agent if its skill catalog does not refresh automatically.
+
+## Provider registration artifacts
+
+The repository root is one aggregate plugin containing all three canonical skill directories. [`.codex-plugin/plugin.json`](.codex-plugin/plugin.json) and [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json) both point to `./skills/`; no provider-specific skill copies or symlinks are maintained. Repo-local Codex and Claude marketplace catalogs point back to the repository root for the same reason.
+
+Registration files are generated from [`manifest.json`](manifest.json), [`publisher.json`](publisher.json), and the MCP package metadata:
+
+```sh
+python3 scripts/sync_registration.py --check
+python3 scripts/sync_registration.py --write
+```
+
+The write form changes only repo-local registration files. It does not install a plugin, add a marketplace to a host, authenticate, publish a package, submit an MCP Registry record, or change the formation gate.
+
+The MCP Registry record is [`mcp/linear-project-mcp-server/server.json`](mcp/linear-project-mcp-server/server.json). Its registry identity is `org.openlyuseful/linear-project`, while its npm package remains `@openly-useful/linear-project-mcp-server`. The official Registry requires `server.json.name` and `package.json.mcpName` to match; the repository validator enforces that equality together with package and version alignment.
 
 ## Requirements
 
@@ -109,7 +149,9 @@ Every workflow is read-first and scope-gated:
 The repository validator uses only the Python standard library:
 
 ```sh
+python3 scripts/test_validate.py
 python3 scripts/validate.py
+python3 scripts/sync_registration.py --check
 ```
 
 To validate the MCP server too:
@@ -121,7 +163,9 @@ pnpm check
 pnpm pack --dry-run
 ```
 
-The repository validator checks skill structure, metadata, references, manifest entries, MCP package metadata, evaluations, placeholder text, and common private-data leaks. Pull requests run both validation paths in GitHub Actions.
+The repository validator checks skill structure, metadata, references, manifest entries, MCP package metadata, evaluations, placeholder text, and common private-data leaks. Pull requests run both validation paths in GitHub Actions. The MCP compatibility job runs the full server check on Node.js 20, 22, and 24; distribution validation runs once, and package-content inspection runs only on Node.js 24.
+
+`python3 scripts/validate.py --external-publication` is intentionally fail-closed while the publisher projection is `formation-pending`, external publication is false, or authorization is withheld. The MCP package runs that gate from `prepublishOnly`, so a publish attempt stops before registry submission or npm release. Local generation, validation, builds, tests, and dry-run packing remain available.
 
 ## Public-data boundary
 

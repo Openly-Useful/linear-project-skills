@@ -1,0 +1,20 @@
+{
+  "interface": {
+    "displayName": "Openly Useful"
+  },
+  "name": "linear-project-skills",
+  "plugins": [
+    {
+      "category": "Productivity",
+      "name": "linear-project-skills",
+      "policy": {
+        "authentication": "ON_INSTALL",
+        "installation": "AVAILABLE"
+      },
+      "source": {
+        "path": ".",
+        "source": "local"
+      }
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "author": {
+    "email": "hello@openlyuseful.org",
+    "name": "Openly Useful",
+    "url": "https://openlyuseful.org"
+  },
+  "description": "Three interoperable skills for bootstrapping, synchronizing, and reconciling tightly scoped Linear projects.",
+  "homepage": "https://github.com/Openly-Useful/linear-project-skills",
+  "license": "MIT",
+  "name": "linear-project-skills",
+  "repository": "https://github.com/Openly-Useful/linear-project-skills",
+  "skills": "./skills/",
+  "version": "0.2.0"
+}

@@ -3,8 +3,15 @@
   "name": "linear-project-skills",
   "version": "0.2.0",
   "publisher": "Openly Useful",
+  "publisherMetadata": "publisher.json",
   "license": "MIT",
   "repository": "https://github.com/Openly-Useful/linear-project-skills",
+  "providerArtifacts": {
+    "codexPlugin": ".codex-plugin/plugin.json",
+    "codexMarketplace": ".agents/plugins/marketplace.json",
+    "claudePlugin": ".claude-plugin/plugin.json",
+    "claudeMarketplace": ".claude-plugin/marketplace.json"
+  },
   "skills": [
     {
       "name": "linear-bootstrap-scoped-project",
@@ -36,6 +43,8 @@
       "name": "linear-project-mcp-server",
       "path": "mcp/linear-project-mcp-server",
       "package": "@openly-useful/linear-project-mcp-server",
+      "registryName": "org.openlyuseful/linear-project",
+      "registryRecord": "mcp/linear-project-mcp-server/server.json",
       "version": "0.1.0",
       "transports": [
         "stdio"
