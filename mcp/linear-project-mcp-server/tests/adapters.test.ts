@@ -43,18 +43,27 @@ describe("LocalObsidianAdapter", () => {
 
     const note = await adapter.read("Projects/ACQI/Overview.md");
     expect(note.obsidianUri).toContain("vault=Work");
-    await adapter.upsertManagedSection({
+    const firstUpsert = await adapter.upsertManagedSection({
       relativePath: "Projects/ACQI/Overview.md",
       scopeCode: "ACQI",
       title: "Overview",
       markdown: "Linear project: linked",
     });
-    await adapter.upsertManagedSection({
+    const secondUpsert = await adapter.upsertManagedSection({
       relativePath: "Projects/ACQI/Overview.md",
       scopeCode: "ACQI",
       title: "Overview",
       markdown: "Linear project: refreshed",
     });
+    const replayUpsert = await adapter.upsertManagedSection({
+      relativePath: "Projects/ACQI/Overview.md",
+      scopeCode: "ACQI",
+      title: "Overview",
+      markdown: "Linear project: refreshed",
+    });
+    expect(firstUpsert.changed).toBe(true);
+    expect(secondUpsert.changed).toBe(true);
+    expect(replayUpsert.changed).toBe(false);
     const content = await readFile(path.join(vaultPath, "Projects", "ACQI", "Overview.md"), "utf8");
     expect(content).toContain("Human notes.");
     expect(content.match(/openly-useful-linear:start ACQI/g)).toHaveLength(1);

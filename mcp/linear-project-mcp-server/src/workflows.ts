@@ -312,7 +312,7 @@ export class TrackerWorkflows {
           title: input.projectName,
           markdown: `Linear scope: ${scopeCode}\n\nProject: ${input.projectName}`,
         });
-        mutations.push(`upserted Obsidian note ${note.relativePath}`);
+        if (note.changed) mutations.push(`upserted Obsidian note ${note.relativePath}`);
         obsidianNote = note;
       } else {
         obsidianNote = await obsidian.read(input.obsidianNotePath);
@@ -336,15 +336,16 @@ export class TrackerWorkflows {
         name: input.projectName.trim(),
         teamIds: [team.id],
         labelIds: [projectLabel.id],
-        description: appendUniqueBlock(input.projectDescription ?? "", projectBlock, scopeMarker(scopeCode)),
+        description: "",
+        content: appendUniqueBlock(input.projectDescription ?? "", projectBlock, scopeMarker(scopeCode)),
       });
       mutations.push(`created project ${project.name}`);
     } else {
       assertProjectAllowed(this.#config, project, team, scopeCode);
       const nextLabels = unique([...project.labelIds, projectLabel.id]);
-      const nextDescription = appendUniqueBlock(project.description, projectBlock, scopeMarker(scopeCode));
-      if (!sameValues(nextLabels, project.labelIds) || nextDescription !== project.description) {
-        project = await linear.updateProject(project.id, { labelIds: nextLabels, description: nextDescription });
+      const nextContent = appendUniqueBlock(project.content, projectBlock, scopeMarker(scopeCode));
+      if (!sameValues(nextLabels, project.labelIds) || nextContent !== project.content) {
+        project = await linear.updateProject(project.id, { labelIds: nextLabels, content: nextContent });
         mutations.push(`applied ${scopeCode} project scope`);
       }
     }
@@ -690,6 +691,7 @@ export class TrackerWorkflows {
     return {
       relativePath: note.relativePath,
       title: note.title,
+      changed: note.changed,
       ...(note.obsidianUri ? { obsidianUri: note.obsidianUri } : {}),
     };
   }

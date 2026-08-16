@@ -65,7 +65,7 @@ export class LocalObsidianAdapter implements ObsidianAdapter {
     scopeCode: string;
     title: string;
     markdown: string;
-  }): Promise<ObsidianNote> {
+  }): Promise<ObsidianNote & { changed: boolean }> {
     this.#requireVault();
     const scopeCode = normalizeScopeCode(input.scopeCode);
     const absolutePath = this.#resolve(input.relativePath, true);
@@ -86,11 +86,11 @@ export class LocalObsidianAdapter implements ObsidianAdapter {
     if (Buffer.byteLength(next, "utf8") > MAX_NOTE_BYTES) {
       throw new ScopeError(`Obsidian note would exceed the ${MAX_NOTE_BYTES}-byte safety limit`);
     }
-    if (next === existing) return this.read(input.relativePath);
+    if (next === existing) return { ...(await this.read(input.relativePath)), changed: false };
     await mkdir(path.dirname(absolutePath), { recursive: true });
     await this.#assertNoSymlinks(path.dirname(absolutePath), false);
     await this.#writeNoFollow(absolutePath, next);
-    return this.read(input.relativePath);
+    return { ...(await this.read(input.relativePath)), changed: true };
   }
 
   #requireVault(): string {

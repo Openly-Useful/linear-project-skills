@@ -104,6 +104,7 @@ export class MemoryLinearGateway implements LinearGateway {
       name: input.name,
       url: `https://linear.example/project/${this.projects.length + 1}`,
       description: input.description,
+      content: input.content ?? "",
       labelIds: [...input.labelIds],
       teamIds: [...input.teamIds],
     };
@@ -119,6 +120,7 @@ export class MemoryLinearGateway implements LinearGateway {
       ...existing,
       ...(input.labelIds ? { labelIds: [...input.labelIds] } : {}),
       ...(input.description !== undefined ? { description: input.description } : {}),
+      ...(input.content !== undefined ? { content: input.content } : {}),
     };
     this.projects[index] = project;
     return structuredClone(project);

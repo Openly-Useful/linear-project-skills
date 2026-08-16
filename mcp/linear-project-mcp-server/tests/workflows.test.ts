@@ -114,6 +114,67 @@ describe("TrackerWorkflows", () => {
     expect(replay).toMatchObject({ firstIssue: { identifier: "ACQI-1" } });
   });
 
+  it("stores project scope in long content without changing the short description", async () => {
+    const linear = new MemoryLinearGateway();
+    const existing = await linear.createProject({
+      name: "Acquisition Intelligence",
+      teamIds: ["team-parent"],
+      labelIds: [],
+      description: "Short project summary",
+      content: "## Overview\n\nHuman-authored project details.\n",
+    });
+    const workflows = new TrackerWorkflows({ config: testConfig(), linear });
+
+    await workflows.bootstrap({
+      scopeCode: "ACQI",
+      projectName: "Acquisition Intelligence",
+      teamMode: "existing",
+      existingTeamId: "team-parent",
+    });
+
+    const updated = await linear.getProject(existing.id);
+    expect(updated.description).toBe("Short project summary");
+    expect(updated.content).toContain("Human-authored project details.");
+    expect(updated.content).toContain("[scope:ACQI]");
+  });
+
+  it("does not report an unchanged Obsidian replay as a mutation", async () => {
+    const linear = new MemoryLinearGateway();
+    let noteWrites = 0;
+    const obsidian = {
+      configured: true,
+      async search() {
+        return [];
+      },
+      async read() {
+        return { relativePath: "Projects/ACQI/Overview.md", title: "Overview", content: "" };
+      },
+      async upsertManagedSection() {
+        noteWrites += 1;
+        return {
+          relativePath: "Projects/ACQI/Overview.md",
+          title: "Overview",
+          content: "",
+          changed: noteWrites === 1,
+        };
+      },
+    };
+    const workflows = new TrackerWorkflows({ config: testConfig(), linear, obsidian });
+    const request = {
+      scopeCode: "ACQI",
+      projectName: "Acquisition Intelligence",
+      teamMode: "existing" as const,
+      existingTeamId: "team-parent",
+      obsidianNotePath: "Projects/ACQI/Overview.md",
+      createObsidianNote: true,
+    };
+
+    await workflows.bootstrap(request);
+    const replay = await workflows.bootstrap(request);
+
+    expect(replay).toMatchObject({ mutations: [] });
+  });
+
   it("does not pretend an existing parent-team project can produce ACQI-1", async () => {
     const linear = new MemoryLinearGateway();
     const workflows = new TrackerWorkflows({ config: testConfig(), linear });

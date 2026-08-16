@@ -17,6 +17,7 @@ export interface ProjectRef {
   name: string;
   url: string;
   description: string;
+  content: string;
   labelIds: readonly string[];
   teamIds: readonly string[];
 }
@@ -148,5 +149,5 @@ export interface ObsidianAdapter {
     scopeCode: string;
     title: string;
     markdown: string;
-  }): Promise<ObsidianNote>;
+  }): Promise<ObsidianNote & { changed: boolean }>;
 }

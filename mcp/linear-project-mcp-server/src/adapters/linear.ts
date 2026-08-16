@@ -235,6 +235,7 @@ export class LinearSdkGateway implements LinearGateway {
       name: string;
       url: string;
       description: string;
+      content?: string | null | undefined;
       labelIds: string[];
     },
     teamIds: readonly string[],
@@ -244,6 +245,7 @@ export class LinearSdkGateway implements LinearGateway {
       name: project.name,
       url: project.url,
       description: project.description,
+      content: project.content ?? "",
       labelIds: [...project.labelIds],
       teamIds: [...teamIds],
     };
