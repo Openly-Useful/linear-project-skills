@@ -299,6 +299,7 @@ def validate_mcp_server() -> None:
     require(package.get("version") == "0.1.0", "MCP package: incorrect version")
     require(package.get("license") == "MIT", "MCP package: license must be MIT")
     require(package.get("type") == "module", "MCP package: expected ESM")
+    require(package.get("packageManager") == "pnpm@10.34.0", "MCP package: pnpm must support the Node.js 20 floor")
     require(package.get("engines", {}).get("node") == ">=20", "MCP package: expected Node.js >=20")
     require(package.get("bin", {}).get("linear-project-mcp-server") == "dist/index.js", "MCP package: missing bin")
     require("LICENSE" in package.get("files", []), "MCP package: LICENSE must be published")

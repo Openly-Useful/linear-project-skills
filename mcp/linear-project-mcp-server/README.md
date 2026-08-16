@@ -38,7 +38,7 @@ All tools use strict input schemas and structured output. Mutating tools require
 
 ## Install and build
 
-Requirements: Node.js 20 or newer and pnpm 11.
+Requirements: Node.js 20 or newer and pnpm 10. pnpm 11 requires Node.js 22 or newer and cannot validate the Node.js 20 compatibility floor.
 
 ```sh
 pnpm install --frozen-lockfile
