@@ -7,8 +7,9 @@
   "description": "Three interoperable skills for bootstrapping, synchronizing, and reconciling tightly scoped Linear projects.",
   "homepage": "https://github.com/Openly-Useful/linear-project-skills",
   "license": "MIT",
+  "mcpServers": "./.mcp.json",
   "name": "linear-project-skills",
   "repository": "https://github.com/Openly-Useful/linear-project-skills",
   "skills": "./skills/",
-  "version": "0.2.0"
+  "version": "0.2.1"
 }

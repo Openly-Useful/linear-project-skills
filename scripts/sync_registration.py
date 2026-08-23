@@ -44,6 +44,33 @@ def registration_outputs() -> dict[Path, dict[str, Any]]:
         "Three interoperable skills for bootstrapping, synchronizing, and reconciling "
         "tightly scoped Linear projects."
     )
+    mcp_config_path = "./.mcp.json"
+    # The published package exposes both the server and write-window binaries.
+    # npm exec installs the exact package, and this portable Node launcher
+    # selects its server entry without relying on a platform shell.
+    mcp_launcher = (
+        'const{delimiter,resolve}=require("node:path"),{pathToFileURL}=require("node:url");'
+        'const bin=process.env.PATH?.split(delimiter)[0];'
+        'if(!bin)throw new Error("npm exec PATH is missing");'
+        'const entry=resolve(bin,"..","@openly-useful","linear-project-mcp-server","dist","index.js");'
+        'process.argv[1]=entry;import(pathToFileURL(entry).href);'
+    )
+    mcp_config = {
+        "mcpServers": {
+            "linear_project": {
+                "args": [
+                    "--yes",
+                    "--package",
+                    f"{package['name']}@{mcp_version}",
+                    "--",
+                    "node",
+                    "-e",
+                    mcp_launcher,
+                ],
+                "command": "npx",
+            }
+        }
+    }
     codex_plugin = {
         "author": author,
         "description": description,
@@ -69,6 +96,7 @@ def registration_outputs() -> dict[Path, dict[str, Any]]:
             "websiteURL": REPOSITORY,
         },
         "license": catalog["license"],
+        "mcpServers": mcp_config_path,
         "name": catalog["name"],
         "repository": REPOSITORY,
         "skills": "./skills/",
@@ -79,6 +107,7 @@ def registration_outputs() -> dict[Path, dict[str, Any]]:
         "description": description,
         "homepage": REPOSITORY,
         "license": catalog["license"],
+        "mcpServers": mcp_config_path,
         "name": catalog["name"],
         "repository": REPOSITORY,
         "skills": "./skills/",
@@ -231,6 +260,7 @@ def registration_outputs() -> dict[Path, dict[str, Any]]:
         ROOT / ".claude-plugin" / "plugin.json": claude_plugin,
         ROOT / ".agents" / "plugins" / "marketplace.json": codex_marketplace,
         ROOT / ".claude-plugin" / "marketplace.json": claude_marketplace,
+        ROOT / ".mcp.json": mcp_config,
         MCP_DIR / "server.json": server,
     }
 

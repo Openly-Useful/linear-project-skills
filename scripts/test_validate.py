@@ -68,5 +68,48 @@ class PublisherPolicyTests(unittest.TestCase):
                     )
 
 
+class PluginRegistrationTests(unittest.TestCase):
+    def test_codex_and_claude_plugins_pin_the_same_stdio_mcp_package(self) -> None:
+        catalog = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
+        package = json.loads(
+            (ROOT / "mcp" / "linear-project-mcp-server" / "package.json").read_text(encoding="utf-8")
+        )
+        codex = json.loads((ROOT / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8"))
+        claude = json.loads((ROOT / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))
+        claude_marketplace = json.loads(
+            (ROOT / ".claude-plugin" / "marketplace.json").read_text(encoding="utf-8")
+        )
+        mcp = json.loads((ROOT / ".mcp.json").read_text(encoding="utf-8"))
+
+        self.assertEqual(catalog["version"], "0.2.1")
+        self.assertEqual(package["version"], "0.1.0")
+        self.assertEqual(codex["version"], catalog["version"])
+        self.assertEqual(claude["version"], catalog["version"])
+        self.assertEqual(claude_marketplace["version"], catalog["version"])
+        self.assertEqual(claude_marketplace["plugins"][0]["version"], catalog["version"])
+        self.assertEqual(codex["mcpServers"], "./.mcp.json")
+        self.assertEqual(claude["mcpServers"], "./.mcp.json")
+        self.assertEqual(
+            mcp,
+            {
+                "mcpServers": {
+                    "linear_project": {
+                        "args": [
+                            "--yes",
+                            "--package",
+                            "@openly-useful/linear-project-mcp-server@0.1.0",
+                            "--",
+                            "node",
+                            "-e",
+                            'const{delimiter,resolve}=require("node:path"),{pathToFileURL}=require("node:url");const bin=process.env.PATH?.split(delimiter)[0];if(!bin)throw new Error("npm exec PATH is missing");const entry=resolve(bin,"..","@openly-useful","linear-project-mcp-server","dist","index.js");process.argv[1]=entry;import(pathToFileURL(entry).href);',
+                        ],
+                        "command": "npx",
+                    }
+                }
+            },
+        )
+        self.assertNotIn("env", mcp["mcpServers"]["linear_project"])
+
+
 if __name__ == "__main__":
     unittest.main()
