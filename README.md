@@ -4,7 +4,7 @@ Three interoperable Agent Skills and an optional MCP server for creating, mainta
 
 This collection is an [Openly Useful](https://openlyuseful.org) project: practical infrastructure people can inspect, adapt, and improve.
 
-Openly Useful LLC is the planned legal entity and remains `formation-pending`. The current publisher display name is Openly Useful; this repository does not claim that the LLC is formed, active, or the current operator. [`publisher.json`](publisher.json) is a repo-local projection of the [public publisher authority](https://openlyuseful.org/publisher/manifest.json), and external package, registry, and marketplace publication remains withheld until formation and publisher authorization are verified.
+Openly Useful LLC is the planned legal entity and remains `formation-pending`. Openly Useful is currently operated by its founder as an individual, and this repository does not claim that the LLC is formed, active, or the current operator. [`publisher.json`](publisher.json) is a repo-local projection of the [public publisher authority](https://openlyuseful.org/publisher/manifest.json). The founder-owner has authorized external source and registry publication while formation proceeds; namespace verification, provider authentication, and provider review remain provider-specific steps.
 
 ## Included skills
 
@@ -84,7 +84,7 @@ python3 scripts/sync_registration.py --check
 python3 scripts/sync_registration.py --write
 ```
 
-The write form changes only repo-local registration files. It does not install a plugin, add a marketplace to a host, authenticate, publish a package, submit an MCP Registry record, or change the formation gate.
+The write form changes only repo-local registration files. It does not install a plugin, add a marketplace to a host, authenticate, publish a package, submit an MCP Registry record, or change the founder-authorization gate.
 
 The MCP Registry record is [`mcp/linear-project-mcp-server/server.json`](mcp/linear-project-mcp-server/server.json). Its registry identity is `org.openlyuseful/linear-project`, while its npm package remains `@openly-useful/linear-project-mcp-server`. The official Registry requires `server.json.name` and `package.json.mcpName` to match; the repository validator enforces that equality together with package and version alignment.
 
@@ -165,7 +165,7 @@ pnpm pack --dry-run
 
 The repository validator checks skill structure, metadata, references, manifest entries, MCP package metadata, evaluations, placeholder text, and common private-data leaks. Pull requests run both validation paths in GitHub Actions. The MCP compatibility job runs the full server check on Node.js 20, 22, and 24; distribution validation runs once, and package-content inspection runs only on Node.js 24.
 
-`python3 scripts/validate.py --external-publication` is intentionally fail-closed while the publisher projection is `formation-pending`, external publication is false, or authorization is withheld. The MCP package runs that gate from `prepublishOnly`, so a publish attempt stops before registry submission or npm release. Local generation, validation, builds, tests, and dry-run packing remain available.
+`python3 scripts/validate.py --external-publication --publication-target npm-package` checks the founder-owner authorization plus the exact publisher identity, policy URLs, namespace, repository provenance, package identity, and registry metadata used by the npm artifact. The MCP package runs that fail-closed gate from `prepublishOnly`. Formation-pending is not itself an npm package blocker because the current operator is the founder-individual and the founder-owner authorization is explicitly effective during formation. Generic provider requirements remain blocking for MCP Registry and provider submissions until their separate workflows are completed.
 
 ## Public-data boundary
 

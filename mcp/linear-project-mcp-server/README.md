@@ -49,7 +49,7 @@ pnpm build
 
 The npm package name is `@openly-useful/linear-project-mcp-server`. It installs the `linear-project-mcp-server` protocol server and the bounded `linear-project-mcp-write-window` safety helper. The package can be run with `npx @openly-useful/linear-project-mcp-server` only after the first successful npm release. Until then, build and run it from a source checkout as shown below.
 
-The official MCP Registry name is `org.openlyuseful/linear-project`. [`server.json`](server.json), `package.json.mcpName`, the npm package version, and the registry package version must agree. External publication is intentionally blocked while the repo-local Openly Useful publisher projection remains `formation-pending`; builds, tests, and `pnpm pack --dry-run` do not activate or publish the record.
+The official MCP Registry name is `org.openlyuseful/linear-project`. [`server.json`](server.json), `package.json.mcpName`, the npm package version, and the registry package version must agree. The repo-local Openly Useful publisher projection records the founder-individual as current operator and a founder-owner authorization that is effective while LLC formation remains pending. `prepublishOnly` verifies that authorization and the exact npm identity, policies, namespace, repository provenance, and registration metadata. Provider authentication and review remain separate MCP Registry steps; builds, tests, validation, and `pnpm pack --dry-run` do not publish the record.
 
 ## Configure
 

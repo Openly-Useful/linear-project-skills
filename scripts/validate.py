@@ -9,6 +9,7 @@ import re
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from typing import Optional
 
 from sync_registration import REGISTRY_NAME, REGISTRY_SCHEMA, registration_drift
 
@@ -179,7 +180,12 @@ def validate_manifest() -> None:
     require(server.get("optionalAdapters") == ["github", "obsidian"], "manifest.json: incorrect optional adapters")
 
 
-def validate_publisher_record(publisher: dict[str, object], *, external_publication: bool) -> None:
+def validate_publisher_record(
+    publisher: dict[str, object],
+    *,
+    external_publication: bool,
+    publication_target: Optional[str] = None,
+) -> None:
     require(publisher.get("schemaVersion") == 1, "publisher.json: unsupported schemaVersion")
     require(publisher.get("id") == "openly-useful", "publisher.json: incorrect publisher ID")
     require(publisher.get("displayName") == "Openly Useful", "publisher.json: incorrect display name")
@@ -194,12 +200,17 @@ def validate_publisher_record(publisher: dict[str, object], *, external_publicat
         legal.get("plannedRoles") == ["publisher", "operator", "licensee"],
         "publisher.json: incorrect planned legal roles",
     )
-    status = legal.get("status")
-    require(status in {"formation-pending", "active"}, "publisher.json: unsupported legal status")
-    if status == "formation-pending":
-        require(legal.get("activeName") is None, "publisher.json: pending entity cannot claim an active legal name")
-    else:
-        require(legal.get("activeName") == "Openly Useful LLC", "publisher.json: active legal name is missing")
+    require(legal.get("status") == "formation-pending", "publisher.json: legal status must remain formation-pending")
+    require(legal.get("activeName") is None, "publisher.json: pending entity cannot claim an active legal name")
+    require(
+        legal.get("currentOperator")
+        == {
+            "type": "founder-individual",
+            "displayName": "Founder of Openly Useful",
+            "operatingAs": "Openly Useful",
+        },
+        "publisher.json: current operator must be the founder-individual operating as Openly Useful",
+    )
     require(
         publisher.get("domains")
         == {
@@ -208,6 +219,10 @@ def validate_publisher_record(publisher: dict[str, object], *, external_publicat
             "publicAuthority": "openlyuseful.org",
         },
         "publisher.json: incorrect domain roles",
+    )
+    require(
+        publisher.get("organization") == {"github": "https://github.com/Openly-Useful"},
+        "publisher.json: incorrect source organization",
     )
     require(
         publisher.get("namespaces")
@@ -232,6 +247,21 @@ def validate_publisher_record(publisher: dict[str, object], *, external_publicat
         },
         "publisher.json: incorrect policy URLs",
     )
+    require(
+        publisher.get("policyMirrors")
+        == {
+            "privacy": "https://github.com/Openly-Useful/openlyuseful.org/blob/main/legal/privacy.html",
+            "terms": "https://github.com/Openly-Useful/openlyuseful.org/blob/main/legal/terms.html",
+            "security": "https://github.com/Openly-Useful/openlyuseful.org/blob/main/security.html",
+            "support": "https://github.com/Openly-Useful/openlyuseful.org/blob/main/support.html",
+        },
+        "publisher.json: incorrect policy mirror URLs",
+    )
+    require(
+        publisher.get("authorityManifestMirror")
+        == "https://github.com/Openly-Useful/openlyuseful.org/blob/main/publisher/manifest.json",
+        "publisher.json: incorrect authority manifest mirror",
+    )
     publication = publisher.get("publication", {})
     require(isinstance(publication, dict), "publisher.json: publication policy is missing")
     require(publication.get("localGenerationAllowed") is True, "publisher.json: local generation must be allowed")
@@ -239,34 +269,49 @@ def validate_publisher_record(publisher: dict[str, object], *, external_publicat
     external_allowed = publication.get("externalPublicationAllowed")
     authorization = publication.get("authorization")
     blockers = publication.get("blockingRequirements")
-    require(isinstance(external_allowed, bool), "publisher.json: external publication flag must be boolean")
-    require(authorization in {"withheld", "granted"}, "publisher.json: unsupported publication authorization")
-    require(isinstance(blockers, list), "publisher.json: blocking requirements must be a list")
-    if status == "formation-pending":
-        require(external_allowed is False, "formation-pending record must block publication")
-        require(authorization == "withheld", "formation-pending authorization must be withheld")
-    elif external_allowed:
-        require(authorization == "granted", "authorized external publication must be granted")
+    require(external_allowed is True, "publisher.json: external publication must be founder-authorized")
+    require(authorization == "granted", "publisher.json: founder publication authorization must be granted")
+    require(
+        publication.get("authorizationBasis") == "founder-owner-direct",
+        "publisher.json: publication authorization basis must be founder-owner-direct",
+    )
+    require(
+        publication.get("effectiveWhileFormationPending") is True,
+        "publisher.json: founder authorization must be effective while formation is pending",
+    )
+    require(
+        blockers == ["namespace-verification", "provider-account-authentication", "provider-review"],
+        "publisher.json: generic provider requirements differ from the public authority",
+    )
     if external_publication:
-        require(status == "active", "external publication blocked: entity is not active")
-        require(external_allowed is True, "external publication blocked by publisher record")
-        require(authorization == "granted", "external publication authorization is withheld")
-        require(not blockers, "external publication still has blocking requirements")
+        require(publication_target is not None, "external publication target is required")
+        if publication_target == "npm-package":
+            # Provider authentication and review are tracked for registry/submission
+            # workflows; they are not npm artifact readiness requirements.
+            pass
+        else:
+            require(not blockers, f"{publication_target} publication still has generic provider requirements")
+    else:
+        require(publication_target is None, "publication target requires --external-publication")
 
 
-def validate_publisher(*, external_publication: bool) -> None:
+def validate_publisher(*, external_publication: bool, publication_target: Optional[str] = None) -> None:
     publisher = json.loads(PUBLISHER_PATH.read_text(encoding="utf-8"))
-    validate_publisher_record(publisher, external_publication=external_publication)
+    validate_publisher_record(
+        publisher,
+        external_publication=external_publication,
+        publication_target=publication_target,
+    )
     require(
         publisher.get("artifactPolicy")
         == {
             "authorityEndpoint": "This manifest is the published authority endpoint for Openly Useful publisher and marketplace verification. It is projected from the governed editable publisher source.",
             "derivation": "Provider-specific skills, MCP manifests, packages, and marketplace listings must derive publisher identity, domains, policy URLs, contacts, and namespaces from this published authority endpoint.",
-            "activation": "The planned legal entity must not be represented as formed, active, or the operator until formation and required publisher verification are complete.",
+            "activation": "Openly Useful is founder-operated while Openly Useful LLC formation is pending. External source and registry publication is authorized by the founder-owner. The planned LLC must not be represented as formed, active, or the operator until formation is accepted; later LLC operation does not require a transfer of RunGlance ownership.",
         },
         "publisher.json: artifact policy differs from the canonical projection",
     )
-    require(publisher.get("lastUpdated") == "2026-08-16", "publisher.json: canonical projection date mismatch")
+    require(publisher.get("lastUpdated") == "2026-08-23", "publisher.json: canonical projection date mismatch")
 
 
 def validate_mcp_server() -> None:
@@ -306,8 +351,9 @@ def validate_mcp_server() -> None:
     require("server.json" in package.get("files", []), "MCP package: server.json must be published")
     require("evaluations" in package.get("files", []), "MCP package: evaluations must be published")
     require(
-        "validate.py --external-publication" in package.get("scripts", {}).get("prepublishOnly", ""),
-        "MCP package: prepublishOnly must enforce the external publication gate",
+        "validate.py --external-publication --publication-target npm-package"
+        in package.get("scripts", {}).get("prepublishOnly", ""),
+        "MCP package: prepublishOnly must enforce the npm publication gate",
     )
     for section in ("dependencies", "devDependencies"):
         dependencies = package.get(section)
@@ -378,8 +424,11 @@ def validate_mcp_server() -> None:
         validate_public_text(path)
 
 
-def validate_repository(*, external_publication: bool = False) -> None:
-    validate_publisher(external_publication=external_publication)
+def validate_repository(*, external_publication: bool = False, publication_target: Optional[str] = None) -> None:
+    validate_publisher(
+        external_publication=external_publication,
+        publication_target=publication_target,
+    )
     validate_manifest()
     validate_mcp_server()
     drift = registration_drift()
@@ -411,11 +460,19 @@ def main() -> int:
     parser.add_argument(
         "--external-publication",
         action="store_true",
-        help="require active formation and publisher authorization before an external publish",
+        help="require founder-owner authorization before an external publish",
+    )
+    parser.add_argument(
+        "--publication-target",
+        choices=("npm-package", "mcp-registry", "provider-submission"),
+        help="external publication boundary to validate",
     )
     args = parser.parse_args()
     try:
-        validate_repository(external_publication=args.external_publication)
+        validate_repository(
+            external_publication=args.external_publication,
+            publication_target=args.publication_target,
+        )
     except (OSError, json.JSONDecodeError, ValidationError) as error:
         print(f"validation failed: {error}", file=sys.stderr)
         return 1
