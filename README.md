@@ -75,7 +75,7 @@ Start a new task or restart the agent if its skill catalog does not refresh auto
 
 ## Provider registration artifacts
 
-The repository root is one aggregate plugin containing all three canonical skill directories. [`.codex-plugin/plugin.json`](.codex-plugin/plugin.json) and [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json) both point to `./skills/`; no provider-specific skill copies or symlinks are maintained. Repo-local Codex and Claude marketplace catalogs point back to the repository root for the same reason.
+The repository root is one aggregate plugin containing all three canonical skill directories. [`.codex-plugin/plugin.json`](.codex-plugin/plugin.json) and [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json) both point to `./skills/` and [`.mcp.json`](.mcp.json); no provider-specific skill copies or symlinks are maintained. The MCP config uses `npx`/`npm exec` to install the immutable `@openly-useful/linear-project-mcp-server@0.1.0` package and launch its server entry explicitly. This avoids ever selecting the package's separate write-window helper and remains portable across host shells. Repo-local Codex and Claude marketplace catalogs point back to the repository root for the same reason.
 
 Registration files are generated from [`manifest.json`](manifest.json), [`publisher.json`](publisher.json), and the MCP package metadata:
 
@@ -85,6 +85,8 @@ python3 scripts/sync_registration.py --write
 ```
 
 The write form changes only repo-local registration files. It does not install a plugin, add a marketplace to a host, authenticate, publish a package, submit an MCP Registry record, or change the founder-authorization gate.
+
+After installing or upgrading the plugin, start a new Codex task or restart Claude Code so the host discovers the newly registered MCP tools. The plugin never embeds credentials or scope values. Supply `LINEAR_API_KEY` or `LINEAR_ACCESS_TOKEN` and the exact `LINEAR_ALLOWED_*` settings through the host environment or a protected launcher. Without them the server still starts, writes remain disabled, and Linear tools fail closed with configuration guidance.
 
 The MCP Registry record is [`mcp/linear-project-mcp-server/server.json`](mcp/linear-project-mcp-server/server.json). Its registry identity is `org.openlyuseful/linear-project`, while its npm package remains `@openly-useful/linear-project-mcp-server`. The official Registry requires `server.json.name` and `package.json.mcpName` to match; the repository validator enforces that equality together with package and version alignment.
 

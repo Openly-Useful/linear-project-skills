@@ -26,8 +26,9 @@
     "websiteURL": "https://github.com/Openly-Useful/linear-project-skills"
   },
   "license": "MIT",
+  "mcpServers": "./.mcp.json",
   "name": "linear-project-skills",
   "repository": "https://github.com/Openly-Useful/linear-project-skills",
   "skills": "./skills/",
-  "version": "0.2.0"
+  "version": "0.2.1"
 }

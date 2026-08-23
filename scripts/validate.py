@@ -149,6 +149,7 @@ def validate_manifest() -> None:
             "codexMarketplace": ".agents/plugins/marketplace.json",
             "claudePlugin": ".claude-plugin/plugin.json",
             "claudeMarketplace": ".claude-plugin/marketplace.json",
+            "mcpConfig": ".mcp.json",
         },
         "manifest.json: incorrect provider artifact map",
     )
@@ -451,6 +452,7 @@ def validate_repository(*, external_publication: bool = False, publication_targe
         ROOT / ".claude-plugin" / "plugin.json",
         ROOT / ".agents" / "plugins" / "marketplace.json",
         ROOT / ".claude-plugin" / "marketplace.json",
+        ROOT / ".mcp.json",
     ):
         validate_public_text(path)
 
