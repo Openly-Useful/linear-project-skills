@@ -33,7 +33,7 @@
     "typecheck": "tsc -p tsconfig.test.json --noEmit",
     "check": "pnpm typecheck && pnpm test && pnpm build",
     "prepack": "pnpm build",
-    "prepublishOnly": "python3 ../../scripts/validate.py --external-publication && pnpm check"
+    "prepublishOnly": "python3 ../../scripts/validate.py --external-publication --publication-target npm-package && pnpm check"
   },
   "packageManager": "pnpm@10.34.0",
   "engines": {
